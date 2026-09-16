@@ -35,24 +35,8 @@ Configure under **Settings → Smart Error**.
 2. Update Apps list and install **Smart Error**
 3. Depends on: `web`, `base_setup`
 
-## Layout
-
-```
-smart_error/
-  __manifest__.py
-  controllers/explain.py   # /smart_error/explain JSON route
-  models/res_config_settings.py
-  views/res_config_settings_views.xml
-  static/src/
-    smart_error_analyzer.js   # parse stacks / RPC payloads
-    smart_error_dialog.js     # OWL dialog + AI UI
-    smart_error_dialog.xml
-    smart_error_dialog.scss
-    smart_error_handler.js    # error_handlers registry (seq 96)
-```
 
 ## Notes
 
 - Does **not** patch core files under `base/web`; extends via registries.
 - Without `?debug=assets`, client module detection may be uncertain (minified bundles).
-- AI 503 = provider overload; 429 = quota; 403/1010 = access blocked — not the same as “tokens finished.”
