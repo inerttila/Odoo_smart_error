@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="smart_error.SmartErrorDialog">
+        <Dialog title="title" size="'md'" contentClass="'o_error_dialog o_smart_error_dialog'">
+            <div role="alert">
+                <p class="text-prewrap mb-2">
+                    <b t-esc="analysis.message or props.message or 'An error occurred'"/>
+                </p>
+
+                <div class="o_smart_error_summary alert alert-warning mb-2" role="status">
+                    <t t-foreach="rows" t-as="row" t-key="row.label">
+                        <div class="o_smart_error_row">
+                            <span class="o_smart_error_label" t-esc="row.label"/>
+                            <code class="o_smart_error_value" t-esc="row.value"/>
+                        </div>
+                    </t>
+                    <p t-if="analysis.hint" class="o_smart_error_hint mb-0 mt-2" t-esc="analysis.hint"/>
+                </div>
+
+                <div class="o_smart_error_ai mb-2">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <strong>AI scan</strong>
+                        <button class="btn btn-link btn-sm px-0"
+                                t-on-click="() => this.explainWithAi()"
+                                t-att-disabled="state.aiLoading">
+                            <t t-if="state.aiLoading">Scanning…</t>
+                            <t t-else="">Ask AI again</t>
+                        </button>
+                    </div>
+                    <div t-if="state.aiLoading" class="alert alert-secondary mb-0" role="status">
+                        Asking free AI what is going on…
+                    </div>
+                    <div t-if="!state.aiLoading and state.aiExplanation"
+                         class="alert alert-success o_smart_error_ai_box mb-0"
+                         role="status">
+                        <pre class="mb-0 o_smart_error_ai_text" t-esc="state.aiExplanation"/>
+                    </div>
+                    <div t-if="!state.aiLoading and state.aiCommand"
+                         class="alert alert-primary o_smart_error_cmd_box mt-2 mb-0"
+                         role="status">
+                        <div class="d-flex justify-content-between align-items-start gap-2">
+                            <div class="flex-grow-1">
+                                <strong class="d-block mb-1">Suggested command</strong>
+                                <code class="o_smart_error_cmd" t-esc="state.aiCommand"/>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary flex-shrink-0"
+                                    t-on-click="onClickCopyCommand">
+                                <i class="fa fa-clipboard me-1"/>Copy
+                            </button>
+                        </div>
+                    </div>
+                    <div t-if="!state.aiLoading and state.aiError"
+                         class="alert alert-light border mb-0"
+                         role="alert">
+                        <span class="text-muted" t-esc="state.aiError"/>
+                    </div>
+                </div>
+
+                <p class="text-muted small mb-2">
+                    Please use the copy button to report the error to your support service.
+                </p>
+
+                <button class="btn btn-link px-0"
+                        t-on-click="() => { state.showTraceback = !state.showTraceback }">
+                    See details
+                </button>
+                <div t-if="state.showTraceback and (props.name or props.message)"
+                     class="alert alert-info bg-100 clearfix" role="alert">
+                    <code t-if="props.name" t-esc="props.name"/>
+                    <p t-if="props.message" t-esc="props.message"/>
+                </div>
+                <div t-if="state.showTraceback" class="alert alert-danger o_error_detail" role="alert">
+                    <pre t-esc="traceback or props.traceback"/>
+                </div>
+            </div>
+            <t t-set-slot="footer">
+                <button class="btn btn-primary o-default-button" t-on-click="props.close">Close</button>
+                <button class="btn btn-secondary" t-on-click="onClickClipboard">
+                    <i class="fa fa-clipboard me-1"/>Copy error to clipboard
+                </button>
+            </t>
+        </Dialog>
+    </t>
+
+</templates>

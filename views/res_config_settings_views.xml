@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_smart_error" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.smart.error</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app string="Smart Error" name="smart_error">
+                    <block title="AI Error Explanation" name="smart_error_ai">
+                        <setting string="AI Provider"
+                                 help="Ollama is fully free and local. Groq/Gemini need a free API key.">
+                            <field name="smart_error_ai_provider"/>
+                        </setting>
+                        <setting string="Model name"
+                                 help="Must match the provider. Gemini example: gemini-3.6-flash (not llama3.2).">
+                            <field name="smart_error_ai_model" placeholder="gemini-3.6-flash"/>
+                        </setting>
+                        <setting string="API Key (Groq / Gemini only)">
+                            <field name="smart_error_ai_api_key" password="True"/>
+                        </setting>
+                        <setting string="Ollama URL">
+                            <field name="smart_error_ai_ollama_url" placeholder="http://127.0.0.1:11434"/>
+                        </setting>
+                        <setting string="Auto-explain on error">
+                            <field name="smart_error_ai_auto"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

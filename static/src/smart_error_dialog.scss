@@ -1,0 +1,55 @@
+.o_smart_error_dialog {
+    .o_smart_error_summary {
+        border-left: 3px solid #875a7b;
+    }
+
+    .o_smart_error_row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem 0.75rem;
+        align-items: baseline;
+        margin-bottom: 0.25rem;
+
+        &:last-of-type {
+            margin-bottom: 0;
+        }
+    }
+
+    .o_smart_error_label {
+        min-width: 5.5rem;
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .o_smart_error_value {
+        word-break: break-all;
+        font-size: 0.875em;
+    }
+
+    .o_smart_error_hint {
+        color: #5b4a42;
+        white-space: pre-wrap;
+    }
+
+    .o_smart_error_ai_box {
+        border-left: 3px solid #198754;
+    }
+
+    .o_smart_error_ai_text {
+        white-space: pre-wrap;
+        font-family: inherit;
+        font-size: 0.925em;
+        line-height: 1.45;
+    }
+
+    .o_smart_error_cmd_box {
+        border-left: 3px solid #0d6efd;
+    }
+
+    .o_smart_error_cmd {
+        display: block;
+        white-space: pre-wrap;
+        word-break: break-all;
+        font-size: 0.85em;
+    }
+}

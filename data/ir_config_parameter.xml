@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="smart_error_ai_provider" model="ir.config_parameter">
+        <field name="key">smart_error.ai_provider</field>
+        <field name="value">ollama</field>
+    </record>
+    <record id="smart_error_ai_model" model="ir.config_parameter">
+        <field name="key">smart_error.ai_model</field>
+        <field name="value">llama3.2</field>
+    </record>
+    <record id="smart_error_ai_ollama_url" model="ir.config_parameter">
+        <field name="key">smart_error.ai_ollama_url</field>
+        <field name="value">http://127.0.0.1:11434</field>
+    </record>
+    <record id="smart_error_ai_auto" model="ir.config_parameter">
+        <field name="key">smart_error.ai_auto</field>
+        <field name="value">True</field>
+    </record>
+</odoo>
