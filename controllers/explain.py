@@ -7,29 +7,31 @@ import urllib.request
 from odoo import http
 from odoo.http import request
 
+from .playbooks import (
+    commands_from_playbook,
+    match_playbook,
+)
+
 _logger = logging.getLogger(__name__)
 
 MAX_TRACEBACK_CHARS = 6000
 
 SYSTEM_PROMPT = (
-    "You are a senior Odoo 17 developer helper. "
-    "Given a Smart Error summary and traceback, explain briefly what is going wrong. "
-    "Be concrete: name the model, method, field, or module when known. "
-    "Keep the explanation short (3-6 sentences). "
-    "Do not invent files or modules that are not in the data. "
-    "Do not provide long step-by-step tutorials.\n\n"
-    "After the explanation, ALWAYS end with exactly one line in this format:\n"
-    "COMMAND: <shell command or none>\n"
-    "Use COMMAND when an Odoo action helps, for example:\n"
-    "- module code/XML/data/view/security changed → "
-    "odoo-bin -c <config> -d <db> -u <module> --stop-after-init\n"
-    "- new module not visible → update Apps list then install\n"
-    "- JS/assets only with --dev=all → hard refresh browser (Ctrl+Shift+R)\n"
-    "- Python field/compute definition changed → restart Odoo or -u <module>\n"
-    "If the problem is only a code bug (wrong method name, bad value, logic error) "
-    "and no upgrade/restart is required, use: COMMAND: none\n"
-    "If the module technical name is known, put it in the -u flag. "
-    "Do not invent a module name."
+    "You are an Odoo 17 error assistant. "
+    "Reply with JSON only. No markdown. No extra text.\n"
+    "Schema:\n"
+    '{"summary":"one short sentence","commands":[{"label":"what this step does","command":"copyable command"}]}\n'
+    "Rules:\n"
+    "- summary is ONE sentence. Put the detail in commands, not in summary.\n"
+    "- commands is an ordered list the developer can copy. 1 to 4 steps.\n"
+    "- Use real module, model, and method names from the report. Do not invent modules.\n"
+    "- Shell upgrades look like: odoo-bin -c CONFIG -d DB -u MODULE --stop-after-init\n"
+    "- Code fixes are commands that start with # so they stay copyable notes.\n"
+    "- If no shell action is needed, still return the code-fix command.\n"
+    "- Do not write essays.\n"
+    "- Explain only the message in this report. Do not reuse another error type.\n"
+    "- Never mention a compute method unless the message says an attribute is missing.\n"
+    "- Put the real error message values in the commands."
 )
 
 
@@ -51,7 +53,24 @@ class SmartErrorExplainController(http.Controller):
             if auto_flag in ("false", "0", "no", ""):
                 return {"ok": False, "skipped": True}
 
-        payload_text = self._build_user_prompt(analysis or {}, traceback, message)
+        analysis = analysis or {}
+        book = match_playbook(analysis, traceback or "")
+        if book:
+            commands = commands_from_playbook(book, analysis)
+            summary = book.get("summary") or ""
+            if analysis.get("message"):
+                summary = f"{summary} {analysis.get('message')}"
+            return {
+                "ok": True,
+                "explanation": summary.strip(),
+                "commands": commands,
+                "command": "\n\n".join(
+                    f"{step['label']}\n{step['command']}" for step in commands
+                )
+                or None,
+            }
+
+        payload_text = self._build_user_prompt(analysis, traceback, message)
         try:
             if provider == "groq":
                 text = self._call_groq(ICP, payload_text)
@@ -59,67 +78,61 @@ class SmartErrorExplainController(http.Controller):
                 text = self._call_gemini(ICP, payload_text)
             else:
                 text = self._call_ollama(ICP, payload_text)
-            explanation, command = self._split_command(text)
-            if not command:
-                command = self._heuristic_command(analysis or {}, traceback or "")
+            summary, commands = self._parse_ai_payload(text)
+            if not commands:
+                commands = self._fallback_commands(analysis or {}, traceback or "")
             return {
                 "ok": True,
-                "explanation": explanation,
-                "command": command,
+                "explanation": summary,
+                "commands": commands,
+                "command": "\n\n".join(
+                    f"{step['label']}\n{step['command']}" for step in commands
+                )
+                or None,
             }
         except Exception as exc:
             _logger.warning("Smart Error AI explain failed (%s): %s", provider, exc)
             return {"ok": False, "error": str(exc)}
 
-    def _split_command(self, text):
-        """Extract trailing COMMAND: line from the model reply."""
+    def _parse_ai_payload(self, text):
+        """Expect JSON {summary, commands}. Fall back to a single block."""
         if not text:
-            return "", None
-        lines = text.strip().splitlines()
-        command = None
-        kept = list(lines)
-        for i in range(len(lines) - 1, -1, -1):
-            raw = lines[i].strip()
-            if raw.upper().startswith("COMMAND:"):
-                value = raw.split(":", 1)[1].strip().strip("`")
-                if value and value.lower() not in ("none", "n/a", "na", "-"):
-                    command = value
-                kept = lines[:i]
-                # drop blank lines just above COMMAND
-                while kept and not kept[-1].strip():
-                    kept.pop()
-                break
-        return "\n".join(kept).strip(), command
+            return "", []
+        raw = text.strip()
+        if raw.startswith("```"):
+            raw = raw.strip("`")
+            if raw.lower().startswith("json"):
+                raw = raw[4:]
+            raw = raw.strip()
+        start = raw.find("{")
+        end = raw.rfind("}")
+        if start != -1 and end > start:
+            try:
+                data = json.loads(raw[start : end + 1])
+            except json.JSONDecodeError:
+                data = None
+            if isinstance(data, dict):
+                summary = (data.get("summary") or "").strip()
+                steps = []
+                for item in data.get("commands") or []:
+                    if isinstance(item, str):
+                        command = item.strip()
+                        label = "Step"
+                    elif isinstance(item, dict):
+                        command = (item.get("command") or "").strip()
+                        label = (item.get("label") or "Step").strip()
+                    else:
+                        continue
+                    if command and command.lower() not in ("none", "n/a"):
+                        steps.append({"label": label, "command": command})
+                return summary, steps
+        return raw, []
 
-    def _heuristic_command(self, analysis, traceback):
-        """Best-effort upgrade/restart hint when the model omitted COMMAND."""
-        module = analysis.get("module")
-        blob = f"{analysis.get('message') or ''}\n{traceback}".lower()
-        needs_upgrade = any(
-            token in blob
-            for token in (
-                "parseerror",
-                "xmlsyntaxerror",
-                "validationerror: error while validating view",
-                "ir.ui.view",
-                "has no column",
-                "undefined column",
-                "relation does not exist",
-                "keyerror: ",
-                "external id not found",
-                "parse error",
-            )
-        )
-        if module and needs_upgrade:
-            return f"odoo-bin -c CONFIG -d DB -u {module} --stop-after-init"
-        if analysis.get("errorKind") == "AttributeError" and analysis.get("functionName"):
-            # Missing method after code edit: reload Python (restart or upgrade)
-            if module:
-                return f"odoo-bin -c CONFIG -d DB -u {module} --stop-after-init"
-            return "Restart Odoo (or run with --dev=all) after fixing the Python code"
-        if analysis.get("source") == "client" and module:
-            return "Hard refresh browser (Ctrl+Shift+R); if assets stale: restart Odoo with --dev=all"
-        return None
+    def _fallback_commands(self, analysis, traceback):
+        book = match_playbook(analysis, traceback)
+        if not book:
+            return []
+        return commands_from_playbook(book, analysis)
 
     def _build_user_prompt(self, analysis, traceback, message):
         lines = ["Odoo Smart Error report:", ""]
@@ -145,8 +158,8 @@ class SmartErrorExplainController(http.Controller):
         if tb:
             lines.extend(["", "Traceback:", tb])
         lines.append("")
-        lines.append("Explain what is going on.")
-        lines.append('End with COMMAND: ... or COMMAND: none')
+        lines.append("")
+        lines.append("Return JSON only about this exact error. Do not answer with a different error pattern.")
         return "\n".join(lines)
 
     def _http_json(self, url, payload, headers=None, timeout=60):

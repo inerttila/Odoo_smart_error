@@ -32,23 +32,34 @@
                         Asking free AI what is going on…
                     </div>
                     <div t-if="!state.aiLoading and state.aiExplanation"
-                         class="alert alert-success o_smart_error_ai_box mb-0"
+                         class="alert alert-success o_smart_error_ai_box mb-2"
                          role="status">
                         <pre class="mb-0 o_smart_error_ai_text" t-esc="state.aiExplanation"/>
                     </div>
-                    <div t-if="!state.aiLoading and state.aiCommand"
-                         class="alert alert-primary o_smart_error_cmd_box mt-2 mb-0"
+                    <div t-if="!state.aiLoading and state.aiCommands.length"
+                         class="o_smart_error_cmd_box"
                          role="status">
-                        <div class="d-flex justify-content-between align-items-start gap-2">
-                            <div class="flex-grow-1">
-                                <strong class="d-block mb-1">Suggested command</strong>
-                                <code class="o_smart_error_cmd" t-esc="state.aiCommand"/>
-                            </div>
-                            <button class="btn btn-sm btn-outline-primary flex-shrink-0"
-                                    t-on-click="onClickCopyCommand">
-                                <i class="fa fa-clipboard me-1"/>Copy
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong>Commands</strong>
+                            <button class="btn btn-sm btn-outline-primary"
+                                    t-on-click="onClickCopyAllCommands">
+                                <i class="fa fa-clipboard me-1"/>Copy all
                             </button>
                         </div>
+                        <t t-foreach="state.aiCommands" t-as="step" t-key="step_index">
+                            <div class="o_smart_error_step mb-2">
+                                <div class="d-flex justify-content-between align-items-start gap-2">
+                                    <span class="o_smart_error_step_label">
+                                        <t t-esc="step_index + 1"/>. <t t-esc="step.label"/>
+                                    </span>
+                                    <button class="btn btn-sm btn-link px-0 flex-shrink-0"
+                                            t-on-click="() => this.onClickCopyCommand(step_index)">
+                                        Copy
+                                    </button>
+                                </div>
+                                <code class="o_smart_error_cmd" t-esc="step.command"/>
+                            </div>
+                        </t>
                     </div>
                     <div t-if="!state.aiLoading and state.aiError"
                          class="alert alert-light border mb-0"

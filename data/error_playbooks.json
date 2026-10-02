@@ -1,0 +1,523 @@
+[
+  {
+    "id": "year_out_of_range",
+    "title": "Date year out of range",
+    "match": ["year", "out of range"],
+    "kinds": ["ValueError"],
+    "summary": "A date was built with a year Python cannot use.",
+    "commands": [
+      {
+        "label": "Correct the date value",
+        "command": "# MESSAGE\n# This is a date error, not a compute method.\n# The year in that value is not between 1 and 9999. Find the date field or URL parameter and enter a real date."
+      }
+    ]
+  },
+  {
+    "id": "missing_compute",
+    "title": "Missing compute method",
+    "match": ["has no attribute", "_compute_"],
+    "kinds": ["AttributeError"],
+    "summary": "The field compute= name does not exist on the model.",
+    "commands": [
+      {
+        "label": "Fix the field definition",
+        "command": "# MESSAGE\n# On MODEL, the compute= method named METHOD is missing. Rename compute= to a method that exists on that model."
+      },
+      {
+        "label": "Reload the module after the Python fix",
+        "command": "odoo-bin -c CONFIG -d DB -u MODULE --stop-after-init"
+      }
+    ]
+  },
+  {
+    "id": "missing_method",
+    "title": "Missing method or attribute",
+    "match": ["has no attribute", "attributeerror"],
+    "kinds": ["AttributeError"],
+    "summary": "Python called a method or attribute that does not exist on the object.",
+    "commands": [
+      {
+        "label": "Find the wrong name",
+        "command": "# Search the traceback model for the missing attribute and fix the call or add the method."
+      },
+      {
+        "label": "Restart Odoo so the Python change is loaded",
+        "command": "odoo-bin -c CONFIG -d DB --dev=all"
+      }
+    ]
+  },
+  {
+    "id": "validation_error",
+    "title": "Validation error",
+    "match": ["validationerror", "validation error"],
+    "kinds": ["ValidationError"],
+    "summary": "A constraint or explicit ValidationError rejected the value.",
+    "commands": [
+      {
+        "label": "This is data, not an upgrade",
+        "command": "# Read the exception message, correct the field value, and save again.\n# Do not upgrade the module unless you also changed Python/XML."
+      }
+    ]
+  },
+  {
+    "id": "user_error",
+    "title": "User error",
+    "match": ["usererror"],
+    "kinds": ["UserError"],
+    "summary": "Business rule blocked the operation.",
+    "commands": [
+      {
+        "label": "Follow the server message",
+        "command": "# Fix the record or the rule that raised UserError. No module upgrade is required."
+      }
+    ]
+  },
+  {
+    "id": "access_error",
+    "title": "Access error",
+    "match": ["accesserror", "access denied", "you are not allowed"],
+    "kinds": ["AccessError", "AccessDenied"],
+    "summary": "The user does not have ACL or record-rule access.",
+    "commands": [
+      {
+        "label": "Check rights on the model",
+        "command": "# Settings > Users > the user: add the group that grants read/write on the model."
+      },
+      {
+        "label": "Reload security if you edited ir.model.access.csv",
+        "command": "odoo-bin -c CONFIG -d DB -u MODULE --stop-after-init"
+      }
+    ]
+  },
+  {
+    "id": "missing_column",
+    "title": "Database column missing",
+    "match": ["undefinedcolumn", "column", "does not exist"],
+    "kinds": [],
+    "summary": "Python added a stored field that is not in the database yet.",
+    "commands": [
+      {
+        "label": "Upgrade the module that owns the field",
+        "command": "odoo-bin -c CONFIG -d DB -u MODULE --stop-after-init"
+      }
+    ]
+  },
+  {
+    "id": "xml_view",
+    "title": "Broken view XML",
+    "match": ["error while validating view", "parseerror", "xmlsyntaxerror", "invalid view"],
+    "kinds": [],
+    "summary": "A view XML file failed to load or validate.",
+    "commands": [
+      {
+        "label": "Fix the XML reported in the traceback",
+        "command": "# Correct the arch (xpath, field name, or XML syntax) in the view file."
+      },
+      {
+        "label": "Upgrade the module to reload views",
+        "command": "odoo-bin -c CONFIG -d DB -u MODULE --stop-after-init"
+      }
+    ]
+  },
+  {
+    "id": "external_id",
+    "title": "Missing external id",
+    "match": ["external id not found", "valueerror: external id"],
+    "kinds": ["ValueError"],
+    "summary": "XML data references an xml id that is not loaded.",
+    "commands": [
+      {
+        "label": "Fix the ref or create the missing record",
+        "command": "# Check id= and ref= in the XML data file against the module that should define it."
+      },
+      {
+        "label": "Upgrade the module that owns the data file",
+        "command": "odoo-bin -c CONFIG -d DB -u MODULE --stop-after-init"
+      }
+    ]
+  },
+  {
+    "id": "client_not_iterable",
+    "title": "Value is not iterable",
+    "match": ["is not iterable"],
+    "kinds": ["TypeError"],
+    "summary": "Client code looped a value that is null, undefined, or not a list.",
+    "commands": [
+      {
+        "label": "Guard the value before the loop",
+        "command": "# In the JS getter or template, default to [] when the property is missing."
+      },
+      {
+        "label": "Reload client assets",
+        "command": "# Hard refresh the browser: Ctrl+Shift+R\n# If the bundle is stale, restart Odoo with --dev=all"
+      }
+    ]
+  },
+  {
+    "id": "client_undefined",
+    "title": "Read of undefined",
+    "match": ["cannot read propert", "undefined", "owlerror"],
+    "kinds": ["TypeError", "OwlError"],
+    "summary": "Owl rendered a component that read a missing object.",
+    "commands": [
+      {
+        "label": "Check the property named in the error",
+        "command": "# The object in the template is empty. Initialize it or optional-chain before reading the property."
+      },
+      {
+        "label": "Reload assets",
+        "command": "# Hard refresh: Ctrl+Shift+R (Odoo running with --dev=all picks up JS without -u)"
+      }
+    ]
+  },
+  {
+    "id": "expected_singleton",
+    "title": "Expected singleton",
+    "match": ["expected singleton", "ensure_one"],
+    "kinds": ["ValueError"],
+    "summary": "The code expected one record and got zero or many.",
+    "commands": [
+      {
+        "label": "Fix the recordset size",
+        "command": "# Call ensure_one() only when the search returns one row.\n# If several rows are valid, loop the recordset instead of reading a field on the whole set."
+      },
+      {
+        "label": "Restart after the Python change",
+        "command": "odoo-bin -c CONFIG -d DB --dev=all"
+      }
+    ]
+  },
+  {
+    "id": "missing_record",
+    "title": "Missing record",
+    "match": ["does not exist or has been deleted", "missingerror"],
+    "kinds": ["MissingError"],
+    "summary": "The record id no longer exists.",
+    "commands": [
+      {
+        "label": "Reload and pick a live record",
+        "command": "# Close the form, refresh the list, and open the record again.\n# A compute, button, or automation is still using a deleted id."
+      }
+    ]
+  },
+  {
+    "id": "field_not_on_model",
+    "title": "Unknown field",
+    "match": ["field", "does not exist", "invalid field", "unknown field"],
+    "kinds": ["ValueError"],
+    "summary": "A view, domain, or Python field name is not on this model.",
+    "commands": [
+      {
+        "label": "Align the name with the model",
+        "command": "# Compare the field in the XML or domain with fields on MODEL.\n# Fix the typo, or add the field on the Python model."
+      },
+      {
+        "label": "Upgrade if you added or renamed the field",
+        "command": "odoo-bin -c CONFIG -d DB -u MODULE --stop-after-init"
+      }
+    ]
+  },
+  {
+    "id": "wrong_selection",
+    "title": "Illegal selection value",
+    "match": ["wrong value", "selection", "selection_add"],
+    "kinds": ["ValueError"],
+    "summary": "The stored value is not one of the field's selection keys.",
+    "commands": [
+      {
+        "label": "Use a real selection key",
+        "command": "# selection=[('key', 'Label'), ...]. Write the key, not the label.\n# To extend a core selection use selection_add, do not replace the whole list."
+      },
+      {
+        "label": "Upgrade after changing the selection",
+        "command": "odoo-bin -c CONFIG -d DB -u MODULE --stop-after-init"
+      }
+    ]
+  },
+  {
+    "id": "invalid_domain",
+    "title": "Invalid domain",
+    "match": ["invalid domain", "domain", "malformed"],
+    "kinds": ["ValueError"],
+    "summary": "A domain leaf is not a valid [field, operator, value] term.",
+    "commands": [
+      {
+        "label": "Fix the domain",
+        "command": "# MESSAGE\n# Fix the domain on MODEL so each term is ['field', 'operator', value] and the field exists."
+      }
+    ]
+  },
+  {
+    "id": "xpath_failed",
+    "title": "View xpath not found",
+    "match": ["cannot be located", "xpath", "view inheritance"],
+    "kinds": [],
+    "summary": "An inherited view xpath no longer matches the parent arch.",
+    "commands": [
+      {
+        "label": "Update the xpath",
+        "command": "# Open the parent view and match expr to a node that still exists.\n# position is inside, before, after, replace, or attributes."
+      },
+      {
+        "label": "Upgrade the module that owns the inherited view",
+        "command": "odoo-bin -c CONFIG -d DB -u MODULE --stop-after-init"
+      }
+    ]
+  },
+  {
+    "id": "duplicate_key",
+    "title": "Unique constraint",
+    "match": ["duplicate key", "uniqueviolation", "already exists", "_sql_constraints"],
+    "kinds": ["IntegrityError"],
+    "summary": "A unique constraint rejected a duplicate value.",
+    "commands": [
+      {
+        "label": "Change the duplicate value",
+        "command": "# The message names the constraint. Edit that field so the value is unique, then save again."
+      }
+    ]
+  },
+  {
+    "id": "not_null",
+    "title": "Required column empty",
+    "match": ["notnullviolation", "null value", "violates not-null"],
+    "kinds": ["IntegrityError"],
+    "summary": "A required stored field was written as empty.",
+    "commands": [
+      {
+        "label": "Fill the field or stop requiring it",
+        "command": "# Set a value before create/write, or remove required=True if the field may be empty."
+      },
+      {
+        "label": "Upgrade if required was added on a stored field",
+        "command": "odoo-bin -c CONFIG -d DB -u MODULE --stop-after-init"
+      }
+    ]
+  },
+  {
+    "id": "foreign_key",
+    "title": "Foreign key still in use",
+    "match": ["foreignkeyviolation", "violates foreign key", "another model requires the record"],
+    "kinds": ["IntegrityError"],
+    "summary": "Delete or unlink is blocked because another record still points here.",
+    "commands": [
+      {
+        "label": "Unlink the dependent records first",
+        "command": "# The message names the other table. Clear or delete those rows, then retry."
+      }
+    ]
+  },
+  {
+    "id": "transaction_aborted",
+    "title": "Transaction aborted",
+    "match": ["current transaction is aborted", "could not serialize", "serializationfailure"],
+    "kinds": ["OperationalError"],
+    "summary": "An earlier SQL error aborted the transaction, or two requests updated the same row.",
+    "commands": [
+      {
+        "label": "Read the first traceback line, not this one",
+        "command": "# Scroll to the first exception above this message. Fix that error.\n# Then retry the action. Do not upgrade only because of this line."
+      }
+    ]
+  },
+  {
+    "id": "import_error",
+    "title": "Import error",
+    "match": ["importerror", "modulenotfounderror", "no module named"],
+    "kinds": ["ImportError", "ModuleNotFoundError"],
+    "summary": "A Python import failed while loading the module.",
+    "commands": [
+      {
+        "label": "Fix the import path",
+        "command": "# In Odoo 17 use a relative import inside the addon, for example: from . import models\n# If this is a PyPI package, install it in the same Python that runs odoo-bin."
+      },
+      {
+        "label": "Install a missing third-party package",
+        "command": "python -m pip install PACKAGE"
+      }
+    ]
+  },
+  {
+    "id": "python_syntax",
+    "title": "Python syntax error",
+    "match": ["syntaxerror", "indentationerror", "unexpected indent"],
+    "kinds": ["SyntaxError", "IndentationError"],
+    "summary": "A Python file in the addon cannot be parsed.",
+    "commands": [
+      {
+        "label": "Fix the file and line from the traceback",
+        "command": "# Correct the syntax or indentation on that line, then save the file."
+      },
+      {
+        "label": "Restart Odoo",
+        "command": "odoo-bin -c CONFIG -d DB --dev=all"
+      }
+    ]
+  },
+  {
+    "id": "missing_button_method",
+    "title": "Button method missing",
+    "match": ["button", "has no attribute", "type=\"object\""],
+    "kinds": ["AttributeError"],
+    "summary": "A form button calls a Python method that is not defined.",
+    "commands": [
+      {
+        "label": "Match the button name to a method",
+        "command": "# In the view, type=\"object\" name=\"method_name\" must exist as def method_name(self): on MODEL."
+      },
+      {
+        "label": "Restart so the new method is loaded",
+        "command": "odoo-bin -c CONFIG -d DB --dev=all"
+      }
+    ]
+  },
+  {
+    "id": "depends_unknown_field",
+    "title": "Bad compute dependency",
+    "match": ["@api.depends", "field", "not found", "dependency"],
+    "kinds": [],
+    "summary": "api.depends lists a field that is not on the model.",
+    "commands": [
+      {
+        "label": "Fix the dependency string",
+        "command": "# @api.depends('partner_id', 'partner_id.name') must use real fields, including dotted related paths."
+      },
+      {
+        "label": "Restart after the decorator change",
+        "command": "odoo-bin -c CONFIG -d DB --dev=all"
+      }
+    ]
+  },
+  {
+    "id": "recursion",
+    "title": "Recursion",
+    "match": ["recursionerror", "maximum recursion depth"],
+    "kinds": ["RecursionError"],
+    "summary": "A compute, inverse, or write calls itself without stopping.",
+    "commands": [
+      {
+        "label": "Break the loop",
+        "command": "# A computed field must not write the fields it depends on in a way that recomputes itself.\n# Use a guard, or move the write out of the compute method."
+      }
+    ]
+  },
+  {
+    "id": "qweb_report",
+    "title": "QWeb report error",
+    "match": ["qweb", "error while rendering", "report"],
+    "kinds": [],
+    "summary": "A report or QWeb template failed while rendering.",
+    "commands": [
+      {
+        "label": "Fix the t-field or variable in the template",
+        "command": "# The traceback names the view. Fix t-field, t-esc, or a missing variable on the record."
+      },
+      {
+        "label": "Upgrade the module that owns the report",
+        "command": "odoo-bin -c CONFIG -d DB -u MODULE --stop-after-init"
+      }
+    ]
+  },
+  {
+    "id": "missing_owl_template",
+    "title": "Missing Owl template",
+    "match": ["missing template", "owlerror", "template"],
+    "kinds": ["OwlError"],
+    "summary": "An Owl component template name is not in the assets.",
+    "commands": [
+      {
+        "label": "Register the XML template",
+        "command": "# The t-name must match Component.template, and the XML file must be listed in web.assets_backend."
+      },
+      {
+        "label": "Upgrade the module and hard-refresh",
+        "command": "odoo-bin -c CONFIG -d DB -u MODULE --stop-after-init"
+      }
+    ]
+  },
+  {
+    "id": "not_a_function",
+    "title": "Not a function",
+    "match": ["is not a function"],
+    "kinds": ["TypeError"],
+    "summary": "Client code called a value that is not a function.",
+    "commands": [
+      {
+        "label": "Check the method name and the import",
+        "command": "# The stack names the call. Confirm the object has that method and the import path is correct."
+      },
+      {
+        "label": "Hard refresh assets",
+        "command": "# Ctrl+Shift+R with Odoo started using --dev=all"
+      }
+    ]
+  },
+  {
+    "id": "asset_bundle",
+    "title": "Asset bundle error",
+    "match": ["could not get content", "asset", "scss", "bundle"],
+    "kinds": [],
+    "summary": "The JS or SCSS asset bundle failed to compile.",
+    "commands": [
+      {
+        "label": "Fix the file named in the log",
+        "command": "# Open that JS, XML, or SCSS file and fix the syntax error on the reported line."
+      },
+      {
+        "label": "Restart with assets debug",
+        "command": "odoo-bin -c CONFIG -d DB --dev=all"
+      }
+    ]
+  },
+  {
+    "id": "module_dependency",
+    "title": "Missing module dependency",
+    "match": ["unmet dependencies", "depends", "module", "not installable"],
+    "kinds": [],
+    "summary": "The addon depends on a module that is missing or not installable.",
+    "commands": [
+      {
+        "label": "Fix the manifest",
+        "command": "# In __manifest__.py, depends must list modules that exist on addons_path and are installable."
+      },
+      {
+        "label": "Update the apps list, then install",
+        "command": "# Apps > Update Apps List, then install the dependency before this module."
+      }
+    ]
+  },
+  {
+    "id": "registry_model",
+    "title": "Model not in registry",
+    "match": ["keyerror", "not found in registry", "env["],
+    "kinds": ["KeyError"],
+    "summary": "Python asked for a model name that is not loaded.",
+    "commands": [
+      {
+        "label": "Use the real model technical name",
+        "command": "# self.env['model.name'] must match _name or _inherit.\n# The defining module must be installed."
+      },
+      {
+        "label": "Install or upgrade that module",
+        "command": "odoo-bin -c CONFIG -d DB -u MODULE --stop-after-init"
+      }
+    ]
+  },
+  {
+    "id": "inverse_name",
+    "title": "Bad one2many inverse",
+    "match": ["inverse_name", "comodel_name", "not a many2one"],
+    "kinds": [],
+    "summary": "A One2many inverse_name is not a Many2one on the other model.",
+    "commands": [
+      {
+        "label": "Point inverse_name at a Many2one",
+        "command": "# fields.One2many(comodel_name='other.model', inverse_name='m2o_field')\n# other.model must have m2o_field = fields.Many2one('this.model')."
+      },
+      {
+        "label": "Upgrade both modules if the field is new",
+        "command": "odoo-bin -c CONFIG -d DB -u MODULE --stop-after-init"
+      }
+    ]
+  }
+]

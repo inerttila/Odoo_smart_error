@@ -19,7 +19,7 @@ export class SmartErrorDialog extends Component {
             showTraceback: false,
             aiLoading: false,
             aiExplanation: null,
-            aiCommand: null,
+            aiCommands: [],
             aiError: null,
         });
         this.analysis = this.props.analysis || this._buildAnalysisFromProps();
@@ -85,20 +85,35 @@ export class SmartErrorDialog extends Component {
     onClickClipboard() {
         let text = formatClipboard(this.analysis, this.traceback);
         if (this.state.aiExplanation) {
-            text += `\n\nAI explanation:\n${this.state.aiExplanation}`;
+            text += `\n\nAI:\n${this.state.aiExplanation}`;
         }
-        if (this.state.aiCommand) {
-            text += `\n\nSuggested command:\n${this.state.aiCommand}`;
+        if (this.state.aiCommands?.length) {
+            text += "\n\nCommands:\n";
+            text += this.state.aiCommands
+                .map((step, index) => `${index + 1}. ${step.label}\n${step.command}`)
+                .join("\n\n");
         }
         browser.navigator.clipboard.writeText(text);
     }
 
-    onClickCopyCommand() {
-        if (!this.state.aiCommand) {
+    onClickCopyCommand(index) {
+        const step = this.state.aiCommands?.[index];
+        if (!step?.command) {
             return;
         }
-        browser.navigator.clipboard.writeText(this.state.aiCommand);
+        browser.navigator.clipboard.writeText(step.command);
         this.notification.add(_t("Command copied"), { type: "success" });
+    }
+
+    onClickCopyAllCommands() {
+        if (!this.state.aiCommands?.length) {
+            return;
+        }
+        const text = this.state.aiCommands
+            .map((step, index) => `${index + 1}. ${step.label}\n${step.command}`)
+            .join("\n\n");
+        browser.navigator.clipboard.writeText(text);
+        this.notification.add(_t("Commands copied"), { type: "success" });
     }
 
     async explainWithAi({ auto = false } = {}) {
@@ -109,7 +124,7 @@ export class SmartErrorDialog extends Component {
         this.state.aiError = null;
         if (!auto) {
             this.state.aiExplanation = null;
-            this.state.aiCommand = null;
+            this.state.aiCommands = [];
         }
         try {
             const result = await this.rpc("/smart_error/explain", {
@@ -123,7 +138,7 @@ export class SmartErrorDialog extends Component {
             }
             if (result?.ok) {
                 this.state.aiExplanation = result.explanation;
-                this.state.aiCommand = result.command || null;
+                this.state.aiCommands = result.commands || [];
                 this.state.aiError = null;
             } else {
                 this.state.aiError = result?.error || _t("AI explanation failed.");
