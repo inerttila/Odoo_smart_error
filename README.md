@@ -1,4 +1,4 @@
-# Smart Error (Odoo 17)
+# <img src="https://raw.githubusercontent.com/inerttila/Inerttila/refs/heads/main/logo/inert-mark.svg" alt="Inert" height="40" />  Smart Error (Odoo 17)
 
 Smart Error replaces the generic **Odoo Client Error** dialog. The stock popup only says that something failed and hides the traceback under See details. This module reads that same error and shows where it came from, what the message actually means, and the commands that belong to that case.
 
